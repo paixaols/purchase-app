@@ -1,3 +1,3 @@
-from decouple import config
+import streamlit as st
 
-MONGODB_URI = config('MONGODB_URI')
+MONGODB_URI = st.secrets['DB']['MONGODB_URI']

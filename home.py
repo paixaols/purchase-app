@@ -11,7 +11,7 @@ st.set_page_config(layout = 'wide')
 # ==============================================================================
 # Headers
 # ==============================================================================
-st.title('App')
+# st.title('App')
 
 # ==============================================================================
 # Select options
@@ -30,18 +30,12 @@ loja = c1.selectbox(
 
 r = api.get_produtos()
 options = [ doc['produto'] for doc in r ]
-options.sort()
 produto = c2.selectbox(
     'Produto',
     options,
     index=None,
     placeholder='Selecione uma opção'
 )
-
-# ==============================================================================
-# Left plot
-# ==============================================================================
-c1, c2 = st.columns(2)
 
 draw_plots = False
 if produto is not None:
@@ -53,23 +47,31 @@ if produto is not None:
         df['data'] = pd.to_datetime(df['data'])
 
         draw_plots = True
-        ref_size = df.loc[0, 'tam_ref']
+        ref_size = df.loc[0, 'unidade_ref']
+
+# ==============================================================================
+# Left plot
+# ==============================================================================
+c1, c2 = st.columns(2)
 
 if draw_plots and loja is not None:
     aux = df[df['loja'] == loja].copy()
+    aux.drop_duplicates(subset='variedade', keep='last', inplace=True)
+    if aux.shape[0] > 0:
+        fig, ax = plt.subplots(figsize=(5, 3))
 
-    fig, ax = plt.subplots(figsize=(5, 3))
-
-    aux.plot(
-        x='marca', y='preco_un',
-        kind='bar',
-        legend=False,
-        title=f'Preços no {loja}',
-        ax=ax
-    )
-    # ax.legend('')
-    ax.set_ylabel(f'Preço por {ref_size}')
-    c1.pyplot(fig)
+        aux.plot(
+            x='variedade', y='preco_ref',
+            kind='bar',
+            legend=False,
+            xlabel='',
+            ylabel=f'Preço por {ref_size}',
+            title=f'Preços no {loja}',
+            ax=ax
+        )
+        c1.pyplot(fig)
+    else:
+        c1.write('Nada encontrado para essa loja :(')
 
 # ==============================================================================
 # Right plot
@@ -81,8 +83,7 @@ if draw_plots:
     for loja in lojas:
         aux = df[df['loja'] == loja]
         aux.plot(
-            x='data', y='preco_un', marker='o',
-            # kind='scatter',
+            x='data', y='preco_ref', marker='o',
             label=loja,
             title='Histórico de preços',
             ax=ax
